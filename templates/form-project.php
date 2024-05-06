@@ -5,9 +5,9 @@
         <ul class="main-navigation__list">
             <?php foreach ($projects as $item): ?>
 
-                <?php $className = isset($item["id"]) && isset($_GET["id"]) && $item["id"] === intval($_GET["id"]) ?
+                <?php $class_name = isset($item["id"]) && isset($_GET["id"]) && $item["id"] === intval($_GET["id"]) ?
                     "main-navigation__list-item--active" : ""; ?>
-                <li class="main-navigation__list-item <?= $className; ?>">
+                <li class="main-navigation__list-item <?= $class_name; ?>">
 
                     <a class="main-navigation__list-item-link" href="?id=<?= $item["id"]; ?>">
                         <?php if (isset($item["name"])): ?>
@@ -15,7 +15,7 @@
                         <?php endif; ?>
                     </a>
                     <span class="main-navigation__list-item-count">
-                        <?= getCountTasksProject($tasksAll, $item); ?>
+                        <?= getCountTasksProject($tasks_all, $item); ?>
                     </span>
                 </li>
             <?php endforeach; ?>
@@ -33,17 +33,17 @@
         <div class="form__row">
             <label class="form__label" for="project_name">Название <sup>*</sup></label>
 
-            <?php $className = isset($validErrors["name"]) ? "form__input--error" : ""; ?>
-            <input class="form__input <?= $className; ?>" type="text" name="name" id="project_name"
+            <?php $class_name = isset($valid_errors["name"]) ? "form__input--error" : ""; ?>
+            <input class="form__input <?= $class_name; ?>" type="text" name="name" id="project_name"
                    value="<?= getPostVal("name"); ?>" placeholder="Введите название проекта">
 
-            <?php if (isset($validErrors["name"])): ?>
-                <p class="form__message"><?= $validErrors["name"]; ?></p>
+            <?php if (isset($valid_errors["name"])): ?>
+                <p class="form__message"><?= $valid_errors["name"]; ?></p>
             <?php endif; ?>
         </div>
 
         <div class="form__row form__row--controls">
-            <?php if (!empty($validErrors)): ?>
+            <?php if (!empty($valid_errors)): ?>
                 <p class="error-message">Пожалуйста, исправьте ошибку в форме</p>
             <?php endif; ?>
             <input class="button" type="submit" name="" value="Добавить">

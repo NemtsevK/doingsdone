@@ -1,5 +1,6 @@
 <?php
-require_once("config.php");
+require_once("php/config.php");
+global $ROOT_DIRECTORY;
 session_start();
 
 $_SESSION = [];

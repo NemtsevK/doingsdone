@@ -1,73 +1,74 @@
 <?php
 require_once "vendor/autoload.php";
-require_once "config.php";
+require_once "php/config.php";
+global $message_caption, $db_config, $config, $template_path, $error_caption, $error_default_message;
 
 $title = "Дела в порядке | Отправка e-mail рассылки";
 
 // Подключение к MySQL
-$link = mysqlConnect($mysqlConfig);
+$link = mysqlConnect($db_config);
 
 // Проверяем наличие ошибок подключения к MySQL и выводим их в шаблоне
-ifMysqlConnectError($link, $config, $title, $templatePath, $errorCaption, $errorDefaultMessage);
+ifMysqlConnectError($link, $config, $title, $template_path, $error_caption, $error_default_message);
 
 $link = $link["link"];
 
 // Список ID пользователей, у которых есть невыполненные задачи, срок выполнения которых равен текущему дню
-$usersIds = dbGetUsersIds($link);
-if ($usersIds["success"] === 0) {
-    $pageContent = showTemplateWithError($templatePath, $errorCaption, $usersIds["errorMessage"]);
-    $layoutContent = showTemplateLayoutGuest($templatePath, $pageContent, $config, $title);
-    dumpAndDie($layoutContent);
+$users_ids = dbGetUsersIds($link);
+if ($users_ids["success"] === 0) {
+    $page_content = showTemplateWithError($template_path, $error_caption, $users_ids["errorMessage"]);
+    $layout_content = showTemplateLayoutGuest($template_path, $page_content, $config, $title);
+    dumpAndDie($layout_content);
 }
 
-if ($usersIds["count"] === 0) {
+if ($users_ids["count"] === 0) {
     $message = "Нет задач для отправки рассылки";
-    $pageContent = showTemplateWithMessage($templatePath, $messageCaption, $message);
-    $layoutContent = showTemplateLayoutGuest($templatePath, $pageContent, $config, $title);
-    dumpAndDie($layoutContent);
+    $page_content = showTemplateWithMessage($template_path, $message_caption, $message);
+    $layout_content = showTemplateLayoutGuest($template_path, $page_content, $config, $title);
+    dumpAndDie($layout_content);
 }
 
-$usersIds = $usersIds["data"];
+$users_ids = $users_ids["data"];
 
-foreach ($usersIds as $value) {
+foreach ($users_ids as $value) {
     // Список невыполненных задач для каждого найденного пользователя
-    $tasksUser = dbGetTasksUser($link, $value["user_id"]);
-    if ($tasksUser["success"] === 0) {
-        $pageContent = showTemplateWithError($templatePath, $errorCaption, $tasksUser["errorMessage"]);
-        $layoutContent = showTemplateLayoutGuest($templatePath, $pageContent, $config, $title);
-        dumpAndDie($layoutContent);
+    $tasks_user = dbGetTasksUser($link, $value["user_id"]);
+    if ($tasks_user["success"] === 0) {
+        $page_content = showTemplateWithError($template_path, $error_caption, $tasks_user["errorMessage"]);
+        $layout_content = showTemplateLayoutGuest($template_path, $page_content, $config, $title);
+        dumpAndDie($layout_content);
     }
 
-    $tasksUser = $tasksUser["data"];
+    $tasks_user = $tasks_user["data"];
 
     // Список данных о каждом найденном пользователе для отправки e-mail рассылки
-    $dataUser = dbGetDataUser($link, $value["user_id"]);
-    if ($dataUser["success"] === 0) {
-        $pageContent = showTemplateWithError($templatePath, $dataUser["errorCaption"], $dataUser["errorMessage"]);
-        $layoutContent = showTemplateLayoutGuest($templatePath, $pageContent, $config, $title);
-        dumpAndDie($layoutContent);
+    $data_user = dbGetDataUser($link, $value["user_id"]);
+    if ($data_user["success"] === 0) {
+        $page_content = showTemplateWithError($template_path, $data_user["errorCaption"], $data_user["errorMessage"]);
+        $layout_content = showTemplateLayoutGuest($template_path, $page_content, $config, $title);
+        dumpAndDie($layout_content);
     }
 
-    $dataUser = $dataUser["data"];
+    $data_user = $data_user["data"];
 
     $recipient = [];
-    $recipient[$dataUser["email"]] = $dataUser["name"];
+    $recipient[$data_user["email"]] = $data_user["name"];
 
-    $messageContent = includeTemplate($templatePath . "email-notify.php", [
-        "dataUser" => $dataUser,
-        "tasksUser" => $tasksUser
+    $message_content = includeTemplate($template_path . "email-notify.php", [
+        "dataUser" => $data_user,
+        "tasksUser" => $tasks_user
     ]);
 
-    $mailSendResult = mailSendMessage($yandexMailConfig, $recipient, $messageContent);
-    if ($mailSendResult["success"] === 0) {
-        $pageContent = showTemplateWithError($templatePath, $errorCaption, $mailSendResult["errorMessage"]);
-        $layoutContent = showTemplateLayoutGuest($templatePath, $pageContent, $config, $title);
-        dumpAndDie($layoutContent);
+    $mail_send_result = mailSendMessage($yandex_mail_config, $recipient, $message_content);
+    if ($mail_send_result["success"] === 0) {
+        $page_content = showTemplateWithError($template_path, $error_caption, $mail_send_result["errorMessage"]);
+        $layout_content = showTemplateLayoutGuest($template_path, $page_content, $config, $title);
+        dumpAndDie($layout_content);
     }
 
     $message = "Рассылка успешно отправлена!";
 }
 
-$pageContent = showTemplateWithMessage($templatePath, $messageCaption, $message);
-$layoutContent = showTemplateLayoutGuest($templatePath, $pageContent, $config, $title);
-print($layoutContent);
+$page_content = showTemplateWithMessage($template_path, $message_caption, $message);
+$layout_content = showTemplateLayoutGuest($template_path, $page_content, $config, $title);
+print($layout_content);

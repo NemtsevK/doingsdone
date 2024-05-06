@@ -5,9 +5,9 @@
         <ul class="main-navigation__list">
             <?php foreach ($projects as $item): ?>
 
-                <?php $className = isset($item["id"]) && isset($_GET["id"]) && $item["id"] === intval($_GET["id"]) ?
+                <?php $class_name = isset($item["id"]) && isset($_GET["id"]) && $item["id"] === intval($_GET["id"]) ?
                     "main-navigation__list-item--active" : ""; ?>
-                <li class="main-navigation__list-item <?= $className; ?>">
+                <li class="main-navigation__list-item <?= $class_name; ?>">
 
                     <a class="main-navigation__list-item-link" href="?id=<?= $item["id"]; ?>">
                         <?php if (isset($item["name"])): ?>
@@ -15,7 +15,7 @@
                         <?php endif; ?>
                     </a>
                     <span class="main-navigation__list-item-count">
-                        <?= getCountTasksProject($tasksAll, $item); ?>
+                        <?= getCountTasksProject($tasks_all, $item); ?>
                     </span>
                 </li>
             <?php endforeach; ?>
@@ -33,12 +33,12 @@
         <div class="form__row">
             <label class="form__label" for="name">Название <sup>*</sup></label>
 
-            <?php $className = isset($validErrors["title"]) ? "form__input--error" : ""; ?>
-            <input class="form__input <?= $className; ?>" type="text" name="title" id="name"
+            <?php $class_name = isset($valid_errors["title"]) ? "form__input--error" : ""; ?>
+            <input class="form__input <?= $class_name; ?>" type="text" name="title" id="name"
                    value="<?= getPostVal("title"); ?>" placeholder="Введите название">
 
-            <?php if (isset($validErrors["title"])): ?>
-                <p class="form__message"><?= $validErrors["title"]; ?></p>
+            <?php if (isset($valid_errors["title"])): ?>
+                <p class="form__message"><?= $valid_errors["title"]; ?></p>
             <?php endif; ?>
         </div>
 
@@ -46,8 +46,8 @@
         <div class="form__row">
             <label class="form__label" for="project">Проект <sup>*</sup></label>
 
-            <?php $className = isset($validErrors["project_id"]) ? "form__input--error" : ""; ?>
-            <select class="form__input form__input--select <?= $className; ?>" name="project_id" id="project">
+            <?php $class_name = isset($valid_errors["project_id"]) ? "form__input--error" : ""; ?>
+            <select class="form__input form__input--select <?= $class_name; ?>" name="project_id" id="project">
                 <option>Выберите проект</option>
 
                 <?php foreach ($projects as $item): ?>
@@ -63,8 +63,8 @@
                 <?php endforeach; ?>
             </select>
 
-            <?php if (isset($validErrors["project_id"])): ?>
-                <p class="form__message"><?= $validErrors["project_id"]; ?></p>
+            <?php if (isset($valid_errors["project_id"])): ?>
+                <p class="form__message"><?= $valid_errors["project_id"]; ?></p>
             <?php endif; ?>
         </div>
 
@@ -72,12 +72,12 @@
         <div class="form__row">
             <label class="form__label" for="date">Дата выполнения</label>
 
-            <?php $className = isset($validErrors["deadline"]) ? "form__input--error" : ""; ?>
-            <input class="form__input form__input--date <?= $className; ?>" type="text" name="deadline" id="date"
+            <?php $class_name = isset($valid_errors["deadline"]) ? "form__input--error" : ""; ?>
+            <input class="form__input form__input--date <?= $class_name; ?>" type="text" name="deadline" id="date"
                    value="<?= getPostVal("deadline"); ?>" placeholder="Введите дату в формате ГГГГ-ММ-ДД">
 
-            <?php if (isset($validErrors["deadline"])): ?>
-                <p class="form__message"><?= $validErrors["deadline"]; ?></p>
+            <?php if (isset($valid_errors["deadline"])): ?>
+                <p class="form__message"><?= $valid_errors["deadline"]; ?></p>
             <?php endif; ?>
         </div>
 
@@ -85,21 +85,21 @@
         <div class="form__row">
             <label class="form__label" for="file">Файл</label>
 
-            <?php $className = isset($validErrors["file"]) ? "form__input--error" : ""; ?>
-            <div class="form__input-file <?= $className; ?>">
+            <?php $class_name = isset($valid_errors["file"]) ? "form__input--error" : ""; ?>
+            <div class="form__input-file <?= $class_name; ?>">
                 <input class="visually-hidden" type="file" name="file" id="file" value="">
                 <label class="button button--transparent" for="file">
                     <span>Выберите файл</span>
                 </label>
 
-                <?php if (isset($validErrors["file"])): ?>
-                    <p class="form__message"><?= $validErrors["file"]; ?></p>
+                <?php if (isset($valid_errors["file"])): ?>
+                    <p class="form__message"><?= $valid_errors["file"]; ?></p>
                 <?php endif; ?>
             </div>
         </div>
 
         <div class="form__row form__row--controls">
-            <?php if (isset($validErrors)): ?>
+            <?php if (isset($valid_errors)): ?>
                 <p class="error-message">Пожалуйста, исправьте ошибки в форме</p>
             <?php endif; ?>
             <input class="button" type="submit" name="" value="Добавить">

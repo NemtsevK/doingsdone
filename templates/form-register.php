@@ -11,12 +11,12 @@
         <div class="form__row">
             <label class="form__label" for="email">E-mail <sup>*</sup></label>
 
-            <?php $className = isset($validErrors["email"]) ? "form__input--error" : ""; ?>
-            <input class="form__input <?= $className; ?>" type="text" name="email" id="email"
+            <?php $class_name = isset($valid_errors["email"]) ? "form__input--error" : ""; ?>
+            <input class="form__input <?= $class_name; ?>" type="text" name="email" id="email"
                    value="<?= getPostVal("email"); ?>" placeholder="Введите e-mail">
 
-            <?php if (isset($validErrors["email"])): ?>
-                <p class="form__message"><?= $validErrors["email"]; ?></p>
+            <?php if (isset($valid_errors["email"])): ?>
+                <p class="form__message"><?= $valid_errors["email"]; ?></p>
             <?php endif; ?>
         </div>
 
@@ -24,12 +24,12 @@
         <div class="form__row">
             <label class="form__label" for="password">Пароль <sup>*</sup></label>
 
-            <?php $className = isset($validErrors["password"]) ? "form__input--error" : ""; ?>
-            <input class="form__input <?= $className; ?>" type="password" name="password" id="password"
+            <?php $class_name = isset($valid_errors["password"]) ? "form__input--error" : ""; ?>
+            <input class="form__input <?= $class_name; ?>" type="password" name="password" id="password"
                    value="" placeholder="Введите пароль">
 
-            <?php if (isset($validErrors["password"])): ?>
-                <p class="form__message"><?= $validErrors["password"]; ?></p>
+            <?php if (isset($valid_errors["password"])): ?>
+                <p class="form__message"><?= $valid_errors["password"]; ?></p>
             <?php endif; ?>
         </div>
 
@@ -37,17 +37,17 @@
         <div class="form__row">
             <label class="form__label" for="name">Имя <sup>*</sup></label>
 
-            <?php $className = isset($validErrors["name"]) ? "form__input--error" : ""; ?>
-            <input class="form__input <?= $className; ?>" type="text" name="name" id="name"
+            <?php $class_name = isset($valid_errors["name"]) ? "form__input--error" : ""; ?>
+            <input class="form__input <?= $class_name; ?>" type="text" name="name" id="name"
                    value="<?= getPostVal("name"); ?>" placeholder="Введите имя">
 
-            <?php if (isset($validErrors["name"])): ?>
-                <p class="form__message"><?= $validErrors["name"]; ?></p>
+            <?php if (isset($valid_errors["name"])): ?>
+                <p class="form__message"><?= $valid_errors["name"]; ?></p>
             <?php endif; ?>
         </div>
 
         <div class="form__row form__row--controls">
-            <?php if (!empty($validErrors)): ?>
+            <?php if (!empty($valid_errors)): ?>
                 <p class="error-message">Пожалуйста, исправьте ошибки в форме</p>
             <?php endif; ?>
             <input class="button" type="submit" name="" value="Зарегистрироваться">

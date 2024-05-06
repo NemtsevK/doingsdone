@@ -1,5 +1,6 @@
 <?php
-require_once("config.php");
+require_once("php/config.php");
+global $ROOT_DIRECTORY, $config, $db_config, $error_caption, $error_default_message, $template_path;
 
 if (!isset($_SESSION["user"])) {
     header("location: {$ROOT_DIRECTORY}/guest.php");
@@ -8,99 +9,99 @@ if (!isset($_SESSION["user"])) {
 
 $title = "Дела в порядке | Добавление проекта";
 $user = $_SESSION["user"];
-$userId = intval($_SESSION["user"]["id"]);
+$user_id = intval($_SESSION["user"]["id"]);
 
 // Если сайт находится в неактивном состоянии, выходим на страницу с сообщением о техническом обслуживании
-ifSiteDisabled($config, $templatePath, $title);
+ifSiteDisabled($config, $template_path, $title);
 
 // Подключение к MySQL
-$link = mysqlConnect($mysqlConfig);
+$link = mysqlConnect($db_config);
 
 // Проверяем наличие ошибок подключения к MySQL и выводим их в шаблоне
-ifMysqlConnectError($link, $config, $title, $templatePath, $errorCaption, $errorDefaultMessage);
+ifMysqlConnectError($link, $config, $title, $template_path, $error_caption, $error_default_message);
 
 $link = $link["link"];
 
 // Список проектов у текущего пользователя
-$projects = dbGetProjects($link, $userId);
+$projects = dbGetProjects($link, $user_id);
 if ($projects["success"] === 0) {
-    $projects["errorMessage"] = $errorDefaultMessage;
-    $pageContent = showTemplateWithError($templatePath, $errorCaption, $projects["errorMessage"]);
-    $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-    dumpAndDie($layoutContent);
+    $projects["errorMessage"] = $error_default_message;
+    $page_content = showTemplateWithError($template_path, $error_caption, $projects["errorMessage"]);
+    $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+    dumpAndDie($layout_content);
 }
 
 $projects = $projects["data"];
 
 // Список всех задач у текущего пользователя
-$tasksAll = dbGetTasks($link, $userId);
-if ($tasksAll["success"] === 0) {
-    $tasksAll["errorMessage"] = $errorDefaultMessage;
-    $pageContent = showTemplateWithError($templatePath, $errorCaption, $tasksAll["errorMessage"]);
-    $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-    dumpAndDie($layoutContent);
+$tasks_all = dbGetTasks($link, $user_id);
+if ($tasks_all["success"] === 0) {
+    $tasks_all["errorMessage"] = $error_default_message;
+    $page_content = showTemplateWithError($template_path, $error_caption, $tasks_all["errorMessage"]);
+    $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+    dumpAndDie($layout_content);
 }
 
-$tasksAll = $tasksAll["data"];
+$tasks_all = $tasks_all["data"];
 
 // ПОЛУЧАЕМ из полей формы необходимые данные от пользователя, ПРОВЕРЯЕМ их и СОХРАНЯЕМ в БД
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // ВАЛИДАЦИЯ формы
     $project = $_POST;
-    $validErrors = [];
+    $valid_errors = [];
 
     if (empty($project["name"])) {
-        $validErrors["name"] = "Это поле должно быть заполнено";
+        $valid_errors["name"] = "Это поле должно быть заполнено";
     }
 
-    $validateLength = validateLength($project["name"],
+    $validate_length = validateLength($project["name"],
         $config["addLengthRules"]["project"]["min"],
         $config["addLengthRules"]["project"]["max"]
     );
 
-    if ($validateLength !== null) {
-        $validErrors["name"] = $validateLength;
+    if ($validate_length !== null) {
+        $valid_errors["name"] = $validate_length;
     }
 
     foreach ($projects as $value) {
         if (isset($project["name"])) {
             if (mb_strtoupper($project["name"]) === mb_strtoupper($value["name"])) {
-                $validErrors["name"] = "Проект с таким названием уже существует";
+                $valid_errors["name"] = "Проект с таким названием уже существует";
             }
         }
     }
     // Конец ВАЛИДАЦИИ формы
 
     // Подсчитываем количество элементов массива с ошибками. Если он не пустой, показываем ошибки вместе с формой
-    if (count($validErrors)) {
-        $pageContent = includeTemplate($templatePath . "form-project.php", [
+    if (count($valid_errors)) {
+        $page_content = includeTemplate($template_path . "form-project.php", [
             "projects" => $projects,
-            "tasksAll" => $tasksAll,
-            "validErrors" => $validErrors
+            "tasks_all" => $tasks_all,
+            "valid_errors" => $valid_errors
         ]);
 
-        $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-        dumpAndDie($layoutContent);
+        $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+        dumpAndDie($layout_content);
     }
 
     // Добавление нового проекта
-    $project = dbInsertProject($link, $userId, $project);
+    $project = dbInsertProject($link, $user_id, $project);
     if ($project["success"] === 0) {
-        $project["errorMessage"] = $errorDefaultMessage;
-        $pageContent = showTemplateWithError($templatePath, $errorCaption, $project["errorMessage"]);
-        $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-        dumpAndDie($layoutContent);
+        $project["errorMessage"] = $error_default_message;
+        $page_content = showTemplateWithError($template_path, $error_caption, $project["errorMessage"]);
+        $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+        dumpAndDie($layout_content);
     }
 
     header("Location: {$ROOT_DIRECTORY}/index.php");
     exit();
 }
 
-$pageContent = includeTemplate($templatePath . "form-project.php", [
+$page_content = includeTemplate($template_path . "form-project.php", [
     "projects" => $projects,
-    "tasksAll" => $tasksAll
+    "tasks_all" => $tasks_all
 ]);
 
-$layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-print($layoutContent);
+$layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+print($layout_content);

@@ -1,18 +1,19 @@
 <?php
-require_once("config.php");
+require_once("php/config.php");
+global $config, $template_path, $ROOT_DIRECTORY;
 
 $title = "Дела в порядке | Гостевая страница";
 
 // Если сайт находится в неактивном состоянии, выходим на страницу с сообщением о техническом обслуживании
-ifSiteDisabled($config, $templatePath, $title);
+ifSiteDisabled($config, $template_path, $title);
 
-$pageContent = includeTemplate(($config["templatePath"] . "guest.php"), []);
+$page_content = includeTemplate(($config["templatePath"] . "guest.php"), []);
 
-$layoutContent = includeTemplate($templatePath . "layout.php", [
-    "pageContent" => $pageContent,
+$layout_content = includeTemplate($template_path . "layout.php", [
+    "page_content" => $page_content,
     "config" => $config,
     "title" => $title,
     "ROOT_DIRECTORY" => $ROOT_DIRECTORY,
 ]);
 
-print($layoutContent);
+print($layout_content);

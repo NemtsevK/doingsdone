@@ -1,5 +1,6 @@
 <?php
-require_once("config.php");
+require_once("php/config.php");
+global $ROOT_DIRECTORY, $message_caption, $config, $template_path, $db_config, $error_caption, $error_default_message;
 
 if (!isset($_SESSION["user"])) {
     header("location: {$ROOT_DIRECTORY}/guest.php");
@@ -8,85 +9,85 @@ if (!isset($_SESSION["user"])) {
 
 $title = "Дела в порядке";
 $user = $_SESSION["user"];
-$userId = intval($_SESSION["user"]["id"]);
+$user_id = intval($_SESSION["user"]["id"]);
 
 // Если сайт находится в неактивном состоянии, выходим на страницу с сообщением о техническом обслуживании
-ifSiteDisabled($config, $templatePath, $title);
+ifSiteDisabled($config, $template_path, $title);
 
 // Подключение к MySQL
-$link = mysqlConnect($mysqlConfig);
+$link = mysqlConnect($db_config);
 
 // Проверяем наличие ошибок подключения к MySQL и выводим их в шаблоне
-ifMysqlConnectError($link, $config, $title, $templatePath, $errorCaption, $errorDefaultMessage);
+ifMysqlConnectError($link, $config, $title, $template_path, $error_caption, $error_default_message);
 
 $link = $link["link"];
 $projects = [];
 $tasks = [];
 
 // Список проектов у текущего пользователя
-$projects = dbGetProjects($link, $userId);
+$projects = dbGetProjects($link, $user_id);
 if ($projects["success"] === 0) {
-    $projects["errorMessage"] = $errorDefaultMessage;
-    $pageContent = showTemplateWithError($templatePath, $errorCaption, $projects["errorMessage"]);
-    $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-    dumpAndDie($layoutContent);
+    $projects["errorMessage"] = $error_default_message;
+    $page_content = showTemplateWithError($template_path, $error_caption, $projects["errorMessage"]);
+    $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+    dumpAndDie($layout_content);
 }
 
 $projects = $projects["data"];
 
 // Список всех задач у текущего пользователя
-$tasksAll = dbGetTasks($link, $userId);
-if ($tasksAll["success"] === 0) {
-    $tasksAll["errorMessage"] = $errorDefaultMessage;
-    $pageContent = showTemplateWithError($templatePath, $errorCaption, $tasksAll["errorMessage"]);
-    $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-    dumpAndDie($layoutContent);
+$tasks_all = dbGetTasks($link, $user_id);
+if ($tasks_all["success"] === 0) {
+    $tasks_all["errorMessage"] = $error_default_message;
+    $page_content = showTemplateWithError($template_path, $error_caption, $tasks_all["errorMessage"]);
+    $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+    dumpAndDie($layout_content);
 }
 
-$tasksAll = $tasksAll["data"];
+$tasks_all = $tasks_all["data"];
 
 // Список всех задач у текущего пользователя для каждого проекта
-$tasks = dbGetTasks($link, $userId);
+$tasks = dbGetTasks($link, $user_id);
 if ($tasks["success"] === 0) {
-    $tasks["errorMessage"] = $errorDefaultMessage;
-    $pageContent = showTemplateWithError($templatePath, $errorCaption, $tasks["errorMessage"]);
-    $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-    dumpAndDie($layoutContent);
+    $tasks["errorMessage"] = $error_default_message;
+    $page_content = showTemplateWithError($template_path, $error_caption, $tasks["errorMessage"]);
+    $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+    dumpAndDie($layout_content);
 }
 
 $tasks = $tasks["data"];
 $tasks = addHoursUntilEndTask($tasks);
 
 if (isset($_GET["project_id"])) {
-    $projectId = intval($_GET["project_id"]);
+    $project_id = intval($_GET["project_id"]);
 
-    $tasks = dbGetTasksProject($link, $projectId, $userId);
+    $tasks = dbGetTasksProject($link, $project_id, $user_id);
     if ($tasks["success"] === 0) {
-        $tasks["errorMessage"] = $errorDefaultMessage;
-        $pageContent = showTemplateWithError($templatePath, $errorCaption, $tasks["errorMessage"]);
-        $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-        dumpAndDie($layoutContent);
+        $tasks["errorMessage"] = $error_default_message;
+        $page_content = showTemplateWithError($template_path, $error_caption, $tasks["errorMessage"]);
+        $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+        dumpAndDie($layout_content);
     }
 
     // Проверяем для текущего ID проекта из адресной строки его существование в массиве проектов
-    $currentProjectId = false;
+    $current_project_id = false;
     foreach ($projects as $key => $value) {
-        if ($projectId === $value["id"]) {
-            $currentProjectId = true;
+        if ($project_id === $value["id"]) {
+            $current_project_id = true;
             break;
         }
     }
 
-    if ($currentProjectId === false) {
+    if ($current_project_id === false) {
         http_response_code(404);
         $message = "Не найдено проекта с таким ID";
-        ifErrorResultSearch($templatePath, $messageCaption, $message, $title, $user);
+        ifErrorResultSearch($template_path, $message_caption, $message, $title, $user);
     }
 
     if ($tasks["count"] == 0) {
         http_response_code(404);
         $message = "Не найдено ни одной задачи для данного проекта";
-        ifErrorResultSearch($templatePath, $messageCaption, $message, $title, $user);
+        ifErrorResultSearch($template_path, $message_caption, $message, $title, $user);
     }
 
     $tasks = $tasks["data"];
@@ -95,59 +96,59 @@ if (isset($_GET["project_id"])) {
 
 // Список задач, найденных по поисковому запросу с использование FULLTEXT поиска MySQL
 $search = "";
-$searchTasks = [];
+$search_tasks = [];
 
 if (isset($_GET["query"])) {
     $search = trim($_GET["query"]);
 
     if ($search) {
-        $searchTasks = dbGetSearchTasks($link, $userId, [$search]);
-        if ($searchTasks["success"] === 0) {
-            $searchTasks["errorMessage"] = $errorDefaultMessage;
-            $pageContent = showTemplateWithError($templatePath, $errorCaption, $searchTasks["errorMessage"]);
-            $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-            dumpAndDie($layoutContent);
+        $search_tasks = dbGetSearchTasks($link, $user_id, [$search]);
+        if ($search_tasks["success"] === 0) {
+            $search_tasks["errorMessage"] = $error_default_message;
+            $page_content = showTemplateWithError($template_path, $error_caption, $search_tasks["errorMessage"]);
+            $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+            dumpAndDie($layout_content);
         }
 
-        if ($searchTasks["count"] == 0) {
+        if ($search_tasks["count"] == 0) {
             http_response_code(404);
-            $searchTasksMessage = "Ничего не найдено по вашему запросу";
+            $search_tasks_message = "Ничего не найдено по вашему запросу";
         }
 
-        $searchTasks = $searchTasks["data"];
+        $search_tasks = $search_tasks["data"];
     }
 }
 
 // Блок сортировки задач (задачи на сегодня, на завтра, просроченные)
 $url = "";
-$urlLink = "";
+$url_link = "";
 
 if (isset($_GET["show_completed"])) {
-    $showCompleteTasks = intval($_GET["show_completed"]);
-    $_GET["show_completed"] = intval(!($showCompleteTasks));
+    $show_complete_tasks = intval($_GET["show_completed"]);
+    $_GET["show_completed"] = intval(!($show_complete_tasks));
 }
 
 // Возвращает информацию о path в виде ассоциативного массива
-$scriptName = pathinfo(__FILE__, PATHINFO_BASENAME);
+$script_name = pathinfo(__FILE__, PATHINFO_BASENAME);
 // Преобразует ассоциативный массив в строку запроса
 $query = http_build_query($_GET);
-$url = "/" . $scriptName . "?" . $query;
+$url = "/" . $script_name . "?" . $query;
 
 if (mb_strpos($url, "show_completed") === false) {
-    $reverseCompleteTasks = intval(!$showCompleteTasks);
-    $urlLink = "&show_completed=$reverseCompleteTasks";
+    $reverse_complete_tasks = intval(!$show_complete_tasks);
+    $url_link = "&show_completed=$reverse_complete_tasks";
 }
 
 $filter = $_GET;
-$filterWhiteList = ["today", "tomorrow", "past"];
+$filter_white_list = ["today", "tomorrow", "past"];
 
-if (isset($filter["tab"]) && in_array($filter["tab"], $filterWhiteList)) {
-    $tasks = dbGetFilterTasks($link, $userId, $filter);
+if (isset($filter["tab"]) && in_array($filter["tab"], $filter_white_list)) {
+    $tasks = dbGetFilterTasks($link, $user_id, $filter);
     if ($tasks["success"] === 0) {
-        $tasks["errorMessage"] = $errorDefaultMessage;
-        $pageContent = showTemplateWithError($templatePath, $errorCaption, $tasks["errorMessage"]);
-        $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-        dumpAndDie($layoutContent);
+        $tasks["errorMessage"] = $error_default_message;
+        $page_content = showTemplateWithError($template_path, $error_caption, $tasks["errorMessage"]);
+        $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+        dumpAndDie($layout_content);
     }
 
     $tasks = $tasks["data"];
@@ -155,80 +156,80 @@ if (isset($filter["tab"]) && in_array($filter["tab"], $filterWhiteList)) {
 }
 
 // Смена статуса выполнения задачи (выполнена -> не выполнена, не выполнена -> выполнена)
-$taskId = "";
-$taskStatus = [];
+$task_id = "";
+$task_status = [];
 $tabs = "";
 
 // Для сохранения состояния блоков фильтров, выбранных пользователем
-if (isset($_GET["tab"]) && in_array($_GET["tab"], $filterWhiteList)) {
+if (isset($_GET["tab"]) && in_array($_GET["tab"], $filter_white_list)) {
     $tabs .= "&tab=" . $_GET["tab"];
 }
 
 if (isset($_GET["task_id"])) {
-    $taskId = intval($_GET["task_id"]);
+    $task_id = intval($_GET["task_id"]);
 
-    $statusTask = dbGetStatusTask($link, $taskId, $userId);
-    if ($statusTask["success"] === 0) {
-        $statusTask["errorMessage"] = $errorDefaultMessage;
-        $pageContent = showTemplateWithError($templatePath, $errorCaption, $statusTask["errorMessage"]);
-        $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-        dumpAndDie($layoutContent);
+    $status_task = dbGetStatusTask($link, $task_id, $user_id);
+    if ($status_task["success"] === 0) {
+        $status_task["errorMessage"] = $error_default_message;
+        $page_content = showTemplateWithError($template_path, $error_caption, $status_task["errorMessage"]);
+        $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+        dumpAndDie($layout_content);
     }
 
-    $statusTask = $statusTask["data"];
+    $status_task = $status_task["data"];
 
-    if (isset($statusTask["status"])) {
+    if (isset($status_task["status"])) {
         $status = 0;
-        if ($statusTask["status"] === 0) {
+        if ($status_task["status"] === 0) {
             $status = 1;
         }
 
-        $changeStatusTask = dbChangeStatusTask($link, $status, $taskId, $userId);
-        if ($changeStatusTask["success"] === 0) {
-            $changeStatusTask["errorMessage"] = $errorDefaultMessage;
-            $pageContent = showTemplateWithError($templatePath, $errorCaption, $changeStatusTask["errorMessage"]);
-            $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-            dumpAndDie($layoutContent);
+        $change_status_task = dbChangeStatusTask($link, $status, $task_id, $user_id);
+        if ($change_status_task["success"] === 0) {
+            $change_status_task["errorMessage"] = $error_default_message;
+            $page_content = showTemplateWithError($template_path, $error_caption, $change_status_task["errorMessage"]);
+            $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+            dumpAndDie($layout_content);
         }
 
-        $redirectTab = "";
+        $redirect_tab = "";
 
-        if (isset($_GET["tab"]) && in_array($_GET["tab"], $filterWhiteList)) {
-            $redirectTab .= "?tab=" . $_GET["tab"];
+        if (isset($_GET["tab"]) && in_array($_GET["tab"], $filter_white_list)) {
+            $redirect_tab .= "?tab=" . $_GET["tab"];
         }
 
-        $redirectTabPart = "&";
-        if ($redirectTab === "") {
-            $redirectTabPart = "?";
+        $redirect_tab_part = "&";
+        if ($redirect_tab === "") {
+            $redirect_tab_part = "?";
         }
 
-        $redirectTab .= "{$redirectTabPart}show_completed=$showCompleteTasks";
+        $redirect_tab .= "{$redirect_tab_part}show_completed=$show_complete_tasks";
 
-        $headerLocation = "Location: index.php";
-        if ($redirectTab !== "") {
-            $headerLocation .= $redirectTab;
+        $header_location = "Location: index.php";
+        if ($redirect_tab !== "") {
+            $header_location .= $redirect_tab;
         }
 
-        header($headerLocation);
+        header($header_location);
         exit();
     }
 }
 
-$showCompleteTasksUrl = "&show_completed=$showCompleteTasks";
+$show_complete_tasks_url = "&show_completed=$show_complete_tasks";
 
-$pageContent = includeTemplate($templatePath . "main.php", [
+$page_content = includeTemplate($template_path . "main.php", [
     "tasks" => $tasks,
     "projects" => $projects,
-    "tasksAll" => $tasksAll,
-    "searchTasks" => $searchTasks,
-    "searchTasksMessage" => $searchTasksMessage,
+    "tasks_all" => $tasks_all,
+    "search_tasks" => $search_tasks,
+    "search_tasks_message" => $search_tasks_message,
     "tabs" => $tabs,
     "url" => $url,
-    "urlLink" => $urlLink,
-    "showCompleteTasks" => $showCompleteTasks,
-    "showCompleteTasksUrl" => $showCompleteTasksUrl,
+    "url_link" => $url_link,
+    "show_complete_tasks" => $show_complete_tasks,
+    "show_complete_tasks_url" => $show_complete_tasks_url,
     "ROOT_DIRECTORY" => $ROOT_DIRECTORY,
 ]);
 
-$layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-print($layoutContent);
+$layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+print($layout_content);
