@@ -28,10 +28,10 @@ function includeTemplate(string $name, array $data = [])
 
 /**
  * Выполняет подключение к MySQL
- * @param array $mysqlConfig Ассоциативный массив с параметрами для подключения к БД
+ * @param array $db_config Ассоциативный массив с параметрами для подключения к БД
  * @return array $result Ассоциативный массив с информацией по ресурсу соединения
  */
-function mysqlConnect(array $mysqlConfig): array
+function mysqlConnect(array $db_config): array
 {
     try {
         // Установка перехвата ошибок: MYSQLI_REPORT_ERROR — Заносит в протокол ошибки вызовов функций mysqli
@@ -41,8 +41,8 @@ function mysqlConnect(array $mysqlConfig): array
         $link = mysqli_init();
         // Устанавливает преобразование целочисленных значений и  чисел с плавающей запятой из столбцов таблицы в PHP числа
         mysqli_options($link, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, 1);
-        mysqli_real_connect($link, $mysqlConfig["host"], $mysqlConfig["user"], $mysqlConfig["password"],
-            $mysqlConfig["database"]);
+        mysqli_real_connect($link, $db_config["host"], $db_config["user"], $db_config["password"],
+            $db_config["database"]);
 
         // Кодировка при работе с MySQL
         mysqli_set_charset($link, "utf8");
@@ -63,23 +63,23 @@ function mysqlConnect(array $mysqlConfig): array
 /**
  * Показывает страницу с сообщением о техническом обслуживании, если сайт находится в неактивном состоянии
  * @param array $config Двумерный массив с параметрами сайта
- * @param string $templatePath Путь к папке с шаблонами
+ * @param string $template_path Путь к папке с шаблонами
  * @param string $title Название страницы сайта
  */
-function ifSiteDisabled(array $config, string $templatePath, string $title)
+function ifSiteDisabled(array $config, string $template_path, string $title)
 {
     global $ROOT_DIRECTORY;
     if (isset($config["enable"]) && $config["enable"] === false) {
         $_SESSION = [];
-        $pageContent = includeTemplate(($config["templatePath"] . "off.php"), []);
+        $page_content = includeTemplate(($config["templatePath"] . "off.php"), []);
 
-        $layoutContent = includeTemplate($templatePath . "layout.php", [
-            "pageContent" => $pageContent,
+        $layout_content = includeTemplate($template_path . "layout.php", [
+            "page_content" => $page_content,
             "config" => $config,
             "title" => $title,
             "ROOT_DIRECTORY" => $ROOT_DIRECTORY,
         ]);
-        dumpAndDie($layoutContent);
+        dumpAndDie($layout_content);
     }
 }
 
@@ -88,22 +88,22 @@ function ifSiteDisabled(array $config, string $templatePath, string $title)
  * @param array $link mysqli Ассоциативный массив с информацией по ресурсу соединения
  * @param array $config Двумерный массив с параметрами сайта
  * @param string $title Название страницы сайта
- * @param string $templatePath Путь к папке с шаблонами
- * @param string $errorCaption Заголовок ошибки
- * @param string $errorDefaultMessage Текст ошибки
+ * @param string $template_path Путь к папке с шаблонами
+ * @param string $error_caption Заголовок ошибки
+ * @param string $error_default_message Текст ошибки
  */
 function ifMysqlConnectError(
     array $link,
     array $config,
     string $title,
-    string $templatePath,
-    string $errorCaption,
-    string $errorDefaultMessage
+    string $template_path,
+    string $error_caption,
+    string $error_default_message
 ) {
     if ($link["success"] === 0) {
-        $pageContent = showTemplateWithError($templatePath, $errorCaption, $errorDefaultMessage);
-        $layoutContent = showTemplateLayoutGuest($templatePath, $pageContent, $config, $title);
-        dumpAndDie($layoutContent);
+        $page_content = showTemplateWithError($template_path, $error_caption, $error_default_message);
+        $layout_content = showTemplateLayoutGuest($template_path, $page_content, $config, $title);
+        dumpAndDie($layout_content);
     }
 }
 
@@ -119,8 +119,8 @@ function dbGetPrepareStmt($link, string $sql, array $data = [])
     $stmt = mysqli_prepare($link, $sql);
 
     if ($stmt === false) {
-        $errorMsg = "Не удалось инициализировать подготовленное выражение: " . mysqli_error($link);
-        die($errorMsg);
+        $error_msg = "Не удалось инициализировать подготовленное выражение: " . mysqli_error($link);
+        die($error_msg);
     }
     if ($data) {
         $types = "";
@@ -152,8 +152,8 @@ function dbGetPrepareStmt($link, string $sql, array $data = [])
         $func(...$values);
 
         if (mysqli_errno($link) > 0) {
-            $errorMsg = "Не удалось связать подготовленное выражение с параметрами: " . mysqli_error($link);
-            die($errorMsg);
+            $error_msg = "Не удалось связать подготовленное выражение с параметрами: " . mysqli_error($link);
+            die($error_msg);
         }
     }
 
@@ -168,12 +168,12 @@ function dbGetPrepareStmt($link, string $sql, array $data = [])
  */
 function dbGetEmail($link, string $email): array
 {
-    $sql = "SELECT id FROM users WHERE email = '$email'";
+    $sql = "SELECT id FROM dd_users WHERE email = '$email'";
     try {
-        $emailResult = mysqli_query($link, $sql);
+        $email_result = mysqli_query($link, $sql);
         $result = [
             "success" => 1,
-            "count" => mysqli_num_rows($emailResult)
+            "count" => mysqli_num_rows($email_result)
         ];
     } catch (Exception $ex) {
         $result = [
@@ -193,7 +193,7 @@ function dbGetEmail($link, string $email): array
  */
 function dbInsertUser($link, array $data = []): array
 {
-    $sql = "INSERT INTO users (email, name, password) VALUES (?, ?, ?)";
+    $sql = "INSERT INTO dd_users (email, name, password) VALUES (?, ?, ?)";
     try {
         // Формируем подготовленное выражение на основе SQL-запроса, ресурс соединения и массива со значениями
         $stmt = dbGetPrepareStmt($link, $sql, $data);
@@ -218,10 +218,10 @@ function dbInsertUser($link, array $data = []): array
  */
 function dbGetUser($link, string $email): array
 {
-    $sql = "SELECT * FROM users WHERE email = '$email'";
+    $sql = "SELECT * FROM dd_users WHERE email = '$email'";
     try {
-        $userResult = mysqli_query($link, $sql);
-        $user = mysqli_fetch_array($userResult, MYSQLI_ASSOC);
+        $user_result = mysqli_query($link, $sql);
+        $user = mysqli_fetch_array($user_result, MYSQLI_ASSOC);
         $result = [
             "success" => 1,
             "data" => $user
@@ -239,19 +239,19 @@ function dbGetUser($link, string $email): array
 /**
  * SQL-запрос для получения списка проектов у текущего пользователя
  * @param $link mysqli Ресурс соединения
- * @param int $userId Id текущего пользователя
+ * @param int $user_id Id текущего пользователя
  * @return array $result Ассоциативный массив с информацией по SQL-запросу
  */
-function dbGetProjects($link, int $userId): array
+function dbGetProjects($link, int $user_id): array
 {
-    $sql = "SELECT id, name FROM projects WHERE user_id = " . $userId;
+    $sql = "SELECT id, name FROM dd_projects WHERE user_id = " . $user_id;
     try {
-        $projectsResult = mysqli_query($link, $sql);
-        $projects = mysqli_fetch_all($projectsResult, MYSQLI_ASSOC);
+        $projects_result = mysqli_query($link, $sql);
+        $projects = mysqli_fetch_all($projects_result, MYSQLI_ASSOC);
         $result = [
             "success" => 1,
             "data" => $projects,
-            "count" => mysqli_num_rows($projectsResult)
+            "count" => mysqli_num_rows($projects_result)
         ];
     } catch (Exception $ex) {
         $result = [
@@ -266,13 +266,13 @@ function dbGetProjects($link, int $userId): array
 /**
  * SQL-запрос на добавление нового проекта у текущего пользователя
  * @param $link mysqli Ресурс соединения
- * @param int $userId Id текущего пользователя
+ * @param int $user_id Id текущего пользователя
  * @param array $data Массив с данными для вставки на место плейсхолдеров
  * @return array $result Ассоциативный массив с информацией по SQL-запросу
  */
-function dbInsertProject($link, int $userId, array $data = []): array
+function dbInsertProject($link, int $user_id, array $data = []): array
 {
-    $sql = "INSERT INTO projects (user_id, name) VALUES ($userId, ?)";
+    $sql = "INSERT INTO dd_projects (user_id, name) VALUES ($user_id, ?)";
     try {
         // Формируем подготовленное выражение на основе SQL-запроса, ресурс соединения и массива со значениями
         $stmt = dbGetPrepareStmt($link, $sql, $data);
@@ -292,25 +292,25 @@ function dbInsertProject($link, int $userId, array $data = []): array
 /**
  * SQL-запрос для получения списка всех задач у текущего пользователя
  * @param $link mysqli Ресурс соединения
- * @param int $userId Id текущего пользователя
+ * @param int $user_id Id текущего пользователя
  * @return array $result Ассоциативный массив с информацией по SQL-запросу
  */
-function dbGetTasks($link, int $userId): array
+function dbGetTasks($link, int $user_id): array
 {
     $sql = <<<SQL
     SELECT t.id, t.user_id, p.name AS project, t.title, t.file, t.deadline, t.status
-    FROM tasks t
-    LEFT JOIN projects p ON t.project_id = p.id
-    LEFT JOIN users u ON t.user_id = u.id
-    WHERE t.user_id = $userId ORDER BY t.id DESC
+    FROM dd_tasks t
+    LEFT JOIN dd_projects p ON t.project_id = p.id
+    LEFT JOIN dd_users u ON t.user_id = u.id
+    WHERE t.user_id = $user_id ORDER BY t.id DESC
 SQL;
     try {
-        $tasksResult = mysqli_query($link, $sql);
-        $tasks = mysqli_fetch_all($tasksResult, MYSQLI_ASSOC);
+        $tasks_result = mysqli_query($link, $sql);
+        $tasks = mysqli_fetch_all($tasks_result, MYSQLI_ASSOC);
         $result = [
             "success" => 1,
             "data" => $tasks,
-            "count" => mysqli_num_rows($tasksResult)
+            "count" => mysqli_num_rows($tasks_result)
         ];
     } catch (Exception $ex) {
         $result = [
@@ -325,13 +325,13 @@ SQL;
 /**
  * SQL-запрос на добавление новой задачи у текущего пользователя
  * @param $link mysqli Ресурс соединения
- * @param int $userId Id текущего пользователя
+ * @param int $user_id Id текущего пользователя
  * @param array $data Массив с данными для вставки на место плейсхолдеров
  * @return array $result Ассоциативный массив с информацией по SQL-запросу
  */
-function dbInsertTask($link, int $userId, array $data = []): array
+function dbInsertTask($link, int $user_id, array $data = []): array
 {
-    $sql = "INSERT INTO tasks (user_id, title, project_id, deadline, file) VALUES ($userId, ?, ?, ?, ?)";
+    $sql = "INSERT INTO dd_tasks (user_id, title, project_id, deadline, file) VALUES ($user_id, ?, ?, ?, ?)";
     try {
         // Формируем подготовленное выражение на основе SQL-запроса, ресурс соединения и массива со значениями
         $stmt = dbGetPrepareStmt($link, $sql, $data);
@@ -351,26 +351,26 @@ function dbInsertTask($link, int $userId, array $data = []): array
 /**
  * SQL-запрос для получения списка всех задач у текущего пользователя для каждого проекта
  * @param $link mysqli Ресурс соединения
- * @param int $projectId Id выбранного проекта текущего пользователя
- * @param int $userId Id текущего пользователя
+ * @param int $project_id Id выбранного проекта текущего пользователя
+ * @param int $user_id Id текущего пользователя
  * @return array $result Ассоциативный массив с информацией по SQL-запросу
  */
-function dbGetTasksProject($link, int $projectId, int $userId): array
+function dbGetTasksProject($link, int $project_id, int $user_id): array
 {
     $sql = <<<SQL
     SELECT t.id, t.user_id, p.name AS project, t.title, t.file, t.deadline, t.status
-    FROM tasks t
-    LEFT JOIN projects p ON t.project_id = p.id
-    LEFT JOIN users u ON t.user_id = u.id
-    WHERE t.user_id = $userId and p.id = $projectId ORDER BY t.id DESC;
+    FROM dd_tasks t
+    LEFT JOIN dd_projects p ON t.project_id = p.id
+    LEFT JOIN dd_users u ON t.user_id = u.id
+    WHERE t.user_id = $user_id and p.id = $project_id ORDER BY t.id DESC;
 SQL;
     try {
-        $tasksResult = mysqli_query($link, $sql);
-        $tasks = mysqli_fetch_all($tasksResult, MYSQLI_ASSOC);
+        $tasks_result = mysqli_query($link, $sql);
+        $tasks = mysqli_fetch_all($tasks_result, MYSQLI_ASSOC);
         $result = [
             "success" => 1,
             "data" => $tasks,
-            "count" => mysqli_num_rows($tasksResult)
+            "count" => mysqli_num_rows($tasks_result)
         ];
     } catch (Exception $ex) {
         $result = [
@@ -385,28 +385,28 @@ SQL;
 /**
  * SQL-запрос для получения списка задач, найденных по поисковому запросу с использование FULLTEXT поиска MySQL
  * @param $link mysqli Ресурс соединения
- * @param int $userId Id текущего пользователя
+ * @param int $user_id Id текущего пользователя
  * @param array $data Массив с данными для вставки на место плейсхолдеров
  * @return array $result Ассоциативный массив с информацией по SQL-запросу
  */
-function dbGetSearchTasks($link, int $userId, array $data = []): array
+function dbGetSearchTasks($link, int $user_id, array $data = []): array
 {
     $sql = <<<SQL
     SELECT t.id, t.user_id, p.id AS project_id, p.name AS project, t.title
-    FROM tasks t
-    LEFT JOIN projects p ON t.project_id = p.id
-    LEFT JOIN users u ON t.user_id = u.id
-    WHERE t.user_id = $userId and MATCH(title) AGAINST(?) ORDER BY t.id DESC
+    FROM dd_tasks t
+    LEFT JOIN dd_projects p ON t.project_id = p.id
+    LEFT JOIN dd_users u ON t.user_id = u.id
+    WHERE t.user_id = $user_id and MATCH(title) AGAINST(?) ORDER BY t.id DESC
 SQL;
     try {
         $stmt = dbGetPrepareStmt($link, $sql, $data);
         mysqli_stmt_execute($stmt);
-        $searchTasksResult = mysqli_stmt_get_result($stmt);
-        $searchTasks = mysqli_fetch_all($searchTasksResult, MYSQLI_ASSOC);
+        $search_tasks_result = mysqli_stmt_get_result($stmt);
+        $search_tasks = mysqli_fetch_all($search_tasks_result, MYSQLI_ASSOC);
         $result = [
             "success" => 1,
-            "data" => $searchTasks,
-            "count" => mysqli_num_rows($searchTasksResult)
+            "data" => $search_tasks,
+            "count" => mysqli_num_rows($search_tasks_result)
         ];
     } catch (Exception $ex) {
         $result = [
@@ -421,50 +421,50 @@ SQL;
 /**
  * SQL-запрос для получения данных для блока сортировки задач у текущего пользователя
  * @param $link mysqli Ресурс соединения
- * @param int $userId Id текущего пользователя
+ * @param int $user_id Id текущего пользователя
  * @param array $filter Ассоциативный массив с фильтрами (задачи на сегодня, на завтра, просроченные)
  * @return array $result Ассоциативный массив с информацией по SQL-запросу
  */
-function dbGetFilterTasks($link, int $userId, array $filter = []): array
+function dbGetFilterTasks($link, int $user_id, array $filter = []): array
 {
     switch ($filter["tab"]) {
         case "today":
             // SQL-запрос для получения списка задач «Повестка дня»
             $sql = <<<SQL
             SELECT t.id, t.user_id, p.name AS project, t.title, t.file, t.deadline, t.status
-            FROM tasks t
-            LEFT JOIN projects p ON t.project_id = p.id
-            LEFT JOIN users u ON t.user_id = u.id
-            WHERE DATE(t.deadline) = DATE(NOW()) and t.user_id = $userId ORDER BY t.id DESC
+            FROM dd_tasks t
+            LEFT JOIN dd_projects p ON t.project_id = p.id
+            LEFT JOIN dd_users u ON t.user_id = u.id
+            WHERE DATE(t.deadline) = DATE(NOW()) and t.user_id = $user_id ORDER BY t.id DESC
 SQL;
             break;
         case "tomorrow":
             // SQL-запрос для получения списка задач на «Завтра»
             $sql = <<<SQL
             SELECT t.id, t.user_id, p.name AS project, t.title, t.file, t.deadline, t.status
-            FROM tasks t
-            LEFT JOIN projects p ON t.project_id = p.id
-            LEFT JOIN users u ON t.user_id = u.id
-            WHERE DATE (t.deadline) = DATE(DATE_ADD(NOW(), INTERVAL 24 HOUR)) and t.user_id = $userId ORDER BY t.id DESC
+            FROM dd_tasks t
+            LEFT JOIN dd_projects p ON t.project_id = p.id
+            LEFT JOIN dd_users u ON t.user_id = u.id
+            WHERE DATE (t.deadline) = DATE(DATE_ADD(NOW(), INTERVAL 24 HOUR)) and t.user_id = $user_id ORDER BY t.id DESC
 SQL;
             break;
         case "past":
             // SQL-запрос для получения списка «Просроченные»
             $sql = <<<SQL
             SELECT t.id, t.user_id, p.name AS project, t.title, t.file, t.deadline, t.status
-            FROM tasks t
-            LEFT JOIN projects p ON t.project_id = p.id
-            LEFT JOIN users u ON t.user_id = u.id
-            WHERE DATE(t.deadline) < DATE(NOW()) and t.user_id = $userId ORDER BY t.id DESC
+            FROM dd_tasks t
+            LEFT JOIN dd_projects p ON t.project_id = p.id
+            LEFT JOIN dd_users u ON t.user_id = u.id
+            WHERE DATE(t.deadline) < DATE(NOW()) and t.user_id = $user_id ORDER BY t.id DESC
 SQL;
             break;
     }
     try {
-        $filterResult = mysqli_query($link, $sql);
-        $filterTasks = mysqli_fetch_all($filterResult, MYSQLI_ASSOC);
+        $filter_result = mysqli_query($link, $sql);
+        $filter_tasks = mysqli_fetch_all($filter_result, MYSQLI_ASSOC);
         $result = [
             "success" => 1,
-            "data" => $filterTasks
+            "data" => $filter_tasks
         ];
     } catch (Exception $ex) {
         $result = [
@@ -479,19 +479,19 @@ SQL;
 /**
  * SQL-запрос для получения статуса выбранной задачи у текущего пользователя
  * @param $link mysqli Ресурс соединения
- * @param int $taskId Id выбранной задачи текущего пользователя
- * @param int $userId Id текущего пользователя
+ * @param int $task_id Id выбранной задачи текущего пользователя
+ * @param int $user_id Id текущего пользователя
  * @return array $result Ассоциативный массив с информацией по SQL-запросу
  */
-function dbGetStatusTask($link, int $taskId, int $userId): array
+function dbGetStatusTask($link, int $task_id, int $user_id): array
 {
-    $sql = "SELECT id, status FROM tasks WHERE id = $taskId and user_id = " . $userId;
+    $sql = "SELECT id, status FROM dd_tasks WHERE id = $task_id and user_id = " . $user_id;
     try {
-        $statusTaskResult = mysqli_query($link, $sql);
-        $statusTask = mysqli_fetch_assoc($statusTaskResult);
+        $status_task_result = mysqli_query($link, $sql);
+        $status_task = mysqli_fetch_assoc($status_task_result);
         $result = [
             "success" => 1,
-            "data" => $statusTask
+            "data" => $status_task
         ];
     } catch (Exception $ex) {
         $result = [
@@ -507,13 +507,13 @@ function dbGetStatusTask($link, int $taskId, int $userId): array
  * SQL-запрос на cмену статуса выполнения задачи у текущего пользователя
  * @param $link mysqli Ресурс соединения
  * @param int $status Статус выбранной задачи
- * @param int $taskId Id выбранной задачи текущего пользователя
- * @param int $userId Id текущего пользователя
+ * @param int $task_id Id выбранной задачи текущего пользователя
+ * @param int $user_id Id текущего пользователя
  * @return array $result Ассоциативный массив с информацией по SQL-запросу
  */
-function dbChangeStatusTask($link, int $status, int $taskId, int $userId): array
+function dbChangeStatusTask($link, int $status, int $task_id, int $user_id): array
 {
-    $sql = "UPDATE tasks SET status = $status WHERE id = $taskId and user_id = " . $userId;
+    $sql = "UPDATE dd_tasks SET status = $status WHERE id = $task_id and user_id = " . $user_id;
     try {
         mysqli_query($link, $sql);
         $result = ["success" => 1];
@@ -534,14 +534,14 @@ function dbChangeStatusTask($link, int $status, int $taskId, int $userId): array
  */
 function dbGetUsersIds($link): array
 {
-    $sql = "SELECT user_id FROM tasks WHERE DATE(deadline) = DATE(NOW()) and status = 0 GROUP BY user_id";
+    $sql = "SELECT user_id FROM dd_tasks WHERE DATE(deadline) = DATE(NOW()) and status = 0 GROUP BY user_id";
     try {
-        $usersIdsResult = mysqli_query($link, $sql);
-        $usersIds = mysqli_fetch_all($usersIdsResult, MYSQLI_ASSOC);
+        $users_ids_result = mysqli_query($link, $sql);
+        $users_ids = mysqli_fetch_all($users_ids_result, MYSQLI_ASSOC);
         $result = [
             "success" => 1,
-            "data" => $usersIds,
-            "count" => mysqli_num_rows($usersIdsResult)
+            "data" => $users_ids,
+            "count" => mysqli_num_rows($users_ids_result)
         ];
     } catch (Exception $ex) {
         $result = [
@@ -561,13 +561,13 @@ function dbGetUsersIds($link): array
  */
 function dbGetTasksUser($link, int $value): array
 {
-    $sql = "SELECT title, deadline FROM tasks WHERE DATE(deadline) = DATE(NOW()) and status = 0 and user_id = $value";
+    $sql = "SELECT title, deadline FROM dd_tasks WHERE DATE(deadline) = DATE(NOW()) and status = 0 and user_id = $value";
     try {
-        $tasksUserResult = mysqli_query($link, $sql);
-        $tasksUser = mysqli_fetch_all($tasksUserResult, MYSQLI_ASSOC);
+        $tasks_user_result = mysqli_query($link, $sql);
+        $tasks_user = mysqli_fetch_all($tasks_user_result, MYSQLI_ASSOC);
         $result = [
             "success" => 1,
-            "data" => $tasksUser
+            "data" => $tasks_user
         ];
     } catch (Exception $ex) {
         $result = [
@@ -587,13 +587,13 @@ function dbGetTasksUser($link, int $value): array
  */
 function dbGetDataUser($link, int $value): array
 {
-    $sql = "SELECT email, name FROM users WHERE id = $value";
+    $sql = "SELECT email, name FROM dd_users WHERE id = $value";
     try {
-        $dataUserResult = mysqli_query($link, $sql);
-        $dataUser = mysqli_fetch_assoc($dataUserResult);
+        $data_user_result = mysqli_query($link, $sql);
+        $data_user = mysqli_fetch_assoc($data_user_result);
         $result = [
             "success" => 1,
-            "data" => $dataUser
+            "data" => $data_user
         ];
     } catch (Exception $ex) {
         $result = [
@@ -607,47 +607,47 @@ function dbGetDataUser($link, int $value): array
 
 /**
  * Показывает шаблон с информацией об ошибке выполнения SQL-запроса
- * @param string $templatePath Путь к папке с шаблонами
- * @param string $errorCaption Заголовок ошибки
- * @param string $errorMessage Текст ошибки
+ * @param string $template_path Путь к папке с шаблонами
+ * @param string $error_caption Заголовок ошибки
+ * @param string $error_message Текст ошибки
  * @return string HTML контент
  */
-function showTemplateWithError(string $templatePath, string $errorCaption, string $errorMessage)
+function showTemplateWithError(string $template_path, string $error_caption, string $error_message)
 {
-    return includeTemplate($templatePath . "inform.php", [
-        "messageCaption" => $errorCaption,
-        "message" => $errorMessage
+    return includeTemplate($template_path . "inform.php", [
+        "message_caption" => $error_caption,
+        "message" => $error_message
     ]);
 }
 
 /**
  * Показывает шаблон с информацией о результате выполненного действия (поиска в БД или отправки сообщения)
- * @param string $templatePath Путь к папке с шаблонами
- * @param string $messageCaption Заголовок сообщения
+ * @param string $template_path Путь к папке с шаблонами
+ * @param string $message_caption Заголовок сообщения
  * @param string $message Текст сообщения
  * @return string HTML контент
  */
-function showTemplateWithMessage(string $templatePath, string $messageCaption, string $message)
+function showTemplateWithMessage(string $template_path, string $message_caption, string $message)
 {
-    return includeTemplate($templatePath . "inform.php", [
-        "messageCaption" => $messageCaption,
+    return includeTemplate($template_path . "inform.php", [
+        "message_caption" => $message_caption,
         "message" => $message
     ]);
 }
 
 /**
  * Показывает шаблон лейаута для зарегистрированного пользователя
- * @param string $templatePath Путь к папке с шаблонами
- * @param string $pageContent Содержание контентной части
+ * @param string $template_path Путь к папке с шаблонами
+ * @param string $page_content Содержание контентной части
  * @param string $title Название страницы
  * @param array $user Данные текущего пользователя
  * @return string HTML контент
  */
-function showTemplateLayout(string $templatePath, string $pageContent, string $title, array $user = [])
+function showTemplateLayout(string $template_path, string $page_content, string $title, array $user = [])
 {
     global $ROOT_DIRECTORY;
-    return includeTemplate($templatePath . "layout.php", [
-        "pageContent" => $pageContent,
+    return includeTemplate($template_path . "layout.php", [
+        "page_content" => $page_content,
         "title" => $title,
         "user" => $user,
         "ROOT_DIRECTORY" => $ROOT_DIRECTORY,
@@ -656,17 +656,17 @@ function showTemplateLayout(string $templatePath, string $pageContent, string $t
 
 /**
  * Показывает шаблон лейаута для НЕзарегистрированного пользователя
- * @param string $templatePath Путь к папке с шаблонами
- * @param string $pageContent Содержание контентной части
+ * @param string $template_path Путь к папке с шаблонами
+ * @param string $page_content Содержание контентной части
  * @param array $config Двумерный массив с параметрами сайта
  * @param string $title Название страницы сайта
  * @return string HTML контент
  */
-function showTemplateLayoutGuest(string $templatePath, string $pageContent, array $config, string $title)
+function showTemplateLayoutGuest(string $template_path, string $page_content, array $config, string $title)
 {
     global $ROOT_DIRECTORY;
-    return includeTemplate($templatePath . "layout.php", [
-        "pageContent" => $pageContent,
+    return includeTemplate($template_path . "layout.php", [
+        "page_content" => $page_content,
         "config" => $config,
         "title" => $title,
         "user" => [],
@@ -676,43 +676,43 @@ function showTemplateLayoutGuest(string $templatePath, string $pageContent, arra
 
 /**
  * Показывает страницу с информацией о результате поиска в БД заданных параметров
- * @param string $templatePath Путь к папке с шаблонами
- * @param string $messageCaption Заголовок сообщения
+ * @param string $template_path Путь к папке с шаблонами
+ * @param string $message_caption Заголовок сообщения
  * @param string $message Текст сообщения
  * @param string $title Название страницы сайта
  * @param array $user Данные текущего пользователя
  */
-function ifErrorResultSearch(string $templatePath, string $messageCaption, string $message, string $title, array $user)
+function ifErrorResultSearch(string $template_path, string $message_caption, string $message, string $title, array $user)
 {
-    $pageContent = showTemplateWithMessage($templatePath, $messageCaption, $message);
-    $layoutContent = showTemplateLayout($templatePath, $pageContent, $title, $user);
-    dumpAndDie($layoutContent);
+    $page_content = showTemplateWithMessage($template_path, $message_caption, $message);
+    $layout_content = showTemplateLayout($template_path, $page_content, $title, $user);
+    dumpAndDie($layout_content);
 }
 
 /**
  * Отправляет подготовленное электронное сообщение (e-mail рассылку)
- * @param array $mailConfig Ассоциативный массив с данными для доступа к SMTP-серверу и параметрами сообщения
+ * @param array $mail_config Ассоциативный массив с данными для доступа к SMTP-серверу и параметрами сообщения
  * @param array $recipient Ассоциативный массив с данными получателя в виде [e-mail => имя]
- * @param string $messageContent Сообщение с HTML форматированием
+ * @param string $message_content Сообщение с HTML форматированием
  * @return array $result E-mail рассылка
  */
-function mailSendMessage(array $mailConfig, array $recipient, string $messageContent): array
+function mailSendMessage(array $mail_config, array $recipient, string $message_content): array
 {
     try {
         // Конфигурация транспорта, отвечает за способ отправки. Содержит параметры доступа к SMTP-серверу
-        $transport = (new Swift_SmtpTransport($mailConfig["domain"], $mailConfig["port"]))
-            ->setUsername($mailConfig["userName"])
-            ->setPassword($mailConfig["password"])
-            ->setEncryption($mailConfig["encryption"]);
+        $transport = (new Swift_SmtpTransport($mail_config["domain"], $mail_config["port"]))
+            ->setUsername($mail_config["userName"])
+            ->setPassword($mail_config["password"])
+            ->setEncryption($mail_config["encryption"]);
 
         // Объект библиотеки SwiftMailer, отвечает за отправку сообщений. Передаём туда созданный объект с SMTP-сервером
         $mailer = new Swift_Mailer($transport);
 
         // Формирование сообщения. Содержит параметры сообщения: текст, тему, отправителя и получателя
-        $message = (new Swift_Message($mailConfig["subject"]))
-            ->setFrom([$mailConfig["userName"] => $mailConfig["userCaption"]])
+        $message = (new Swift_Message($mail_config["subject"]))
+            ->setFrom([$mail_config["userName"] => $mail_config["userCaption"]])
             ->setBcc($recipient)
-            ->setBody($messageContent, "text/html");
+            ->setBody($message_content, "text/html");
 
         // Отправка сообщения
         $result = [
@@ -768,12 +768,12 @@ function validateEmail(string $value)
 /**
  * Проверяет, присутствует ли в массиве значение
  * @param mixed $value Искомое значение
- * @param array $valuesList Массив значений
+ * @param array $values_list Массив значений
  * @return string|null
  */
-function validateValue($value, array $valuesList)
+function validateValue($value, array $values_list)
 {
-    if (!in_array($value, $valuesList)) {
+    if (!in_array($value, $values_list)) {
         return "Выберите проект из раскрывающегося списка";
     }
 
@@ -812,10 +812,10 @@ function validateLength(string $value, int $min, int $max)
  */
 function isDateValid(string $date): bool
 {
-    $formatToCheck = "Y-m-d";
-    $dateTimeObj = date_create_from_format($formatToCheck, $date);
+    $format_to_check = "Y-m-d";
+    $date_time_obj = date_create_from_format($format_to_check, $date);
 
-    return $dateTimeObj !== false && array_sum(date_get_last_errors()) === 0;
+    return $date_time_obj !== false && array_sum(date_get_last_errors()) === 0;
 }
 
 /**
@@ -847,11 +847,11 @@ function addHoursUntilEndTask(array $tasks): array
 {
     foreach ($tasks as $task_key => $task) {
         if (isset($task["deadline"])) {
-            $tsEnd = strtotime($task["deadline"]);
-            $tsNow = time();
-            $tsDiff = $tsEnd - $tsNow;
-            $hoursUntilEnd = floor($tsDiff / 3600);
-            $tasks[$task_key]["hours_until_end"] = $hoursUntilEnd;
+            $ts_end = strtotime($task["deadline"]);
+            $ts_now = time();
+            $ts_diff = $ts_end - $ts_now;
+            $hours_until_end = floor($ts_diff / 3600);
+            $tasks[$task_key]["hours_until_end"] = $hours_until_end;
         }
     }
 
