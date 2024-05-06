@@ -1,9 +1,9 @@
 <?php
 // Путь к папке с шаблонами
-$templatePath = "templates/";
+$template_path = "templates/";
 
 // HTML-код основного содержимого страницы
-$pageContent = "";
+$page_content = "";
 
 // Название страницы сайта
 $title = "";
@@ -15,37 +15,37 @@ $projects = [];
 $tasks = [];
 
 // Массив списка всех задач у текущего пользователя
-$tasksAll = [];
+$tasks_all = [];
 
 // Массив списка задач пользователя, найденных по поисковому запросу
-$searchTasks = [];
+$search_tasks = [];
 
 // Текст ошибки при выполнении поискового запроса
-$searchTasksMessage = "";
+$search_tasks_message = "";
 
 // Заголовок сообщения об ошибке или о результате выполненного дествия
-$errorCaption = "Что-то пошло не так";
-$messageCaption = "Результат запроса";
+$error_caption = "Что-то пошло не так";
+$message_caption = "Результат запроса";
 
 // Текст сообщения об ошибке или о результате выполненного дествия, которое выводится в информационном шаблоне
-$errorDefaultMessage = "Повторите попытку...";
+$error_default_message = "Повторите попытку...";
 $message = "";
 
 // Массив ошибок при выполнении валидации формы
-$validErrors = [];
+$valid_errors = [];
 
 // Текст ошибки при выполнении валидации формы
-$validErrorMessage = "";
+$valid_error_message = "";
 
 // Название вкладки для блока фильтра задач
 $tabs = "";
 
 // Для показа выполненных задач в различных вкладках фильтра задач
 $url = "";
-$urlLink = "";
-$showCompleteTasks = 1;
-$showCompleteTasksUrl = "";
+$url_link = "";
+$show_complete_tasks = 1;
+$show_complete_tasks_url = "";
 
 // Данные пользователя и список задач для e-mail рассылки
-$dataUser = [];
-$tasksUser = [];
+$data_user = [];
+$tasks_user = [];

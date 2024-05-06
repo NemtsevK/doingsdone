@@ -3,6 +3,7 @@ session_start();
 
 date_default_timezone_set("Europe/Moscow");
 
+require_once("db_config.php");
 require_once("data.php");
 require_once("functions.php");
 
@@ -36,16 +37,8 @@ $config = [
     ]
 ];
 
-// Параметры для подключения к БД
-$mysqlConfig = [
-    "host" => "localhost",
-    "user" => "root",
-    "password" => "",
-    "database" => "doings_done"
-];
-
 // Параметры для отправки электронного сообщения (e-mail рассылки)
-$yandexMailConfig = [
+$yandex_mail_config = [
     "userName" => "testemaily@yandex.ru",
     "password" => "WEB_web_WEB",
     "domain" => "smtp.yandex.ru",
